@@ -25,7 +25,7 @@ import os
 class PretrainingConfig(object):
   """Defines pre-training hyperparameters."""
 
-  def __init__(self, model_name, data_dir, **kwargs):
+  def __init__(self, model_name, data_dir, model_size='small', **kwargs):
     self.model_name = model_name
     self.debug = False  # debug mode for quickly running things
     self.do_train = True  # pre-train ELECTRA
@@ -50,7 +50,7 @@ class PretrainingConfig(object):
     self.num_eval_steps = 100
 
     # model settings
-    self.model_size = "small"  # one of "small", "base", or "large"
+    self.model_size = model_size  # one of "small", "base", or "large"
     # override the default transformer hparams for the provided model size; see
     # modeling.BertConfig for the possible hparams and util.training_utils for
     # the defaults
