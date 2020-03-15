@@ -114,17 +114,22 @@ class PretrainingConfig(object):
       self.embedding_size = 128
     # Here are the hyperparameters we used for larger models; see Table 6 in the
     # paper for the full hyperparameters
-    # else:
-    #   self.max_seq_length = 512
-    #   self.learning_rate = 2e-4
-    #   if self.model_size == "base":
-    #     self.embedding_size = 768
-    #     self.generator_hidden_size = 0.33333
-    #     self.train_batch_size = 256
-    #   else:
-    #     self.embedding_size = 1024
-    #     self.mask_prob = 0.25
-    #     self.train_batch_size = 2048
+    else:
+      self.learning_rate = 2e-4
+      if self.model_size == "base":
+        self.max_seq_length = 128
+        self.embedding_size = 768
+        self.generator_hidden_size = 0.33333
+        self.train_batch_size = 256
+      elif self.model_size == "medium":
+        self.max_seq_length = 64
+        self.embedding_size = 576
+        self.generator_hidden_size = 0.33333
+        self.train_batch_size = 256
+      else:
+        self.embedding_size = 1024
+        self.mask_prob = 0.25
+        self.train_batch_size = 2048
 
     # passed-in-arguments override (for example) debug-mode defaults
     self.update(kwargs)
