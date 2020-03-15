@@ -361,6 +361,33 @@ def train_one_step(config: configure_pretraining.PretrainingConfig):
   with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
     utils.log(sess.run(model.total_loss))
+    
+def train_on_tpu(config):
+  import tensorflow as tf
+  model_fn = model_fn_builder(config=config)
+
+  tpu_cluster_resolver = tf.contrib.cluster_resolver.TPUClusterResolver(config.tpu_name)
+
+  run_config = tf.contrib.tpu.RunConfig(
+      cluster=tpu_cluster_resolver,
+      model_dir=config.model_dir,
+      save_checkpoints_steps=config.save_checkpoints_steps,
+      tpu_config=tf.contrib.tpu.TPUConfig(
+          iterations_per_loop=config.save_checkpoints_steps,
+          num_shards=config.num_tpu_cores,
+          per_host_input_for_training=tf.contrib.tpu.InputPipelineConfig.PER_HOST_V2))
+
+  estimator = tf.contrib.tpu.TPUEstimator(
+      use_tpu=config.use_tpu,
+      model_fn=model_fn,
+      config=run_config,
+      train_batch_size=config.train_batch_size,
+      eval_batch_size=config.eval_batch_size)
+
+  train_input_fn = pretrain_data.get_input_fn(config, True)
+
+  estimator.train(input_fn=train_input_fn,
+                max_steps=config.num_train_steps)
 
 
 def main():
