@@ -99,6 +99,8 @@ def get_bert_config(config):
     args = {"hidden_size": 1024, "num_hidden_layers": 24}
   elif config.model_size == "base":
     args = {"hidden_size": 768, "num_hidden_layers": 12}
+  elif config.model_size == "medium":
+    args = {"hidden_size": 576, "num_hidden_layers": 12}
   elif config.model_size == "small":
     args = {"hidden_size": 256, "num_hidden_layers": 12}
   else:
