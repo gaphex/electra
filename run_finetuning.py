@@ -24,6 +24,7 @@ import collections
 import json
 
 import tensorflow.compat.v1 as tf
+import tensorflow_hub as hub
 
 import configure_finetuning
 from finetune import preprocessing
@@ -32,6 +33,7 @@ from model import modeling
 from model import optimization
 from util import training_utils
 from util import utils
+
 
 
 class FinetuningModel(object):
@@ -131,6 +133,55 @@ def model_fn_builder(config: configure_finetuning.FinetuningConfig, tasks,
     return output_spec
 
   return model_fn
+
+
+def build_module_fn(config, vocab_path, do_lower_case=True, use_tpu=False):
+    with open(vocab_path) as fi:
+      vocab = fi.read().split('\n')
+      vocab = [v for v in vocab if len(v)]
+      vocab_size = len(vocab)
+      config.vocab_size = vocab_size
+
+    def bert_module_fn(is_training):
+        """Spec function for a token embedding module."""
+
+        input_ids = tf.placeholder(shape=[None, None], dtype=tf.int32, name="input_ids")
+        input_mask = tf.placeholder(shape=[None, None], dtype=tf.int32, name="input_mask")
+        token_type = tf.placeholder(shape=[None, None], dtype=tf.int32, name="segment_ids")
+
+        bert_config = training_utils.get_bert_config(config)
+        
+        model = modeling.BertModel(
+            bert_config=bert_config,
+            is_training=is_training,
+            input_ids=input_ids,
+            input_mask=input_mask,
+            token_type_ids=token_type,
+            use_one_hot_embeddings=use_tpu,
+            embedding_size=config.embedding_size)
+          
+        seq_output = model.sequence_output
+        pool_output = model.pooled_output
+
+        vocab_file = tf.constant(value=vocab_path, dtype=tf.string, name="vocab_file")
+        lower_case = tf.constant(do_lower_case)
+
+        tf.add_to_collection(tf.GraphKeys.ASSET_FILEPATHS, vocab_file)
+        
+        input_map = {"input_ids": input_ids,
+                     "input_mask": input_mask,
+                     "segment_ids": token_type}
+        
+        output_map = {"pooled_output": pool_output,
+                      "sequence_output": seq_output}
+
+        output_info_map = {"vocab_file": vocab_file,
+                           "do_lower_case": lower_case}
+                
+        hub.add_signature(name="tokens", inputs=input_map, outputs=output_map)
+        hub.add_signature(name="tokenization_info", inputs={}, outputs=output_info_map)
+
+    return bert_module_fn
 
 
 class ModelRunner(object):
