@@ -27,7 +27,7 @@ import tensorflow.compat.v1 as tf
 class FinetuningConfig(object):
   """Fine-tuning hyperparameters."""
 
-  def __init__(self, model_name, data_dir, **kwargs):
+  def __init__(self, model_name, data_dir, model_size="small", **kwargs):
     # general
     self.model_name = model_name
     self.debug = False  # debug mode for quickly running things
@@ -38,7 +38,7 @@ class FinetuningConfig(object):
     self.keep_all_models = True  # if False, only keep the last trial's ckpt
 
     # model
-    self.model_size = "small"  # one of "small", "base", or "large"
+    self.model_size = model_size  # one of "small", "base", or "large"
     self.task_names = ["chunk"]  # which tasks to learn
     # override the default transformer hparams for the provided model size; see
     # modeling.BertConfig for the possible hparams and util.training_utils for
@@ -149,6 +149,10 @@ class FinetuningConfig(object):
     if self.model_size == "large":
       self.learning_rate = 5e-5
       self.layerwise_lr_decay = 0.9
+    elif self.model_size == "medium":
+      self.embedding_size = 576
+    elif self.model_size == "base":
+      self.embedding_size = 768
     elif self.model_size == "small":
       self.embedding_size = 128
 
